@@ -1,0 +1,92 @@
+name: Build macOS Plugin (Apple Silicon arm64 & Universal)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build Configuration'
+        required: true
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
+      architecture:
+        description: 'Target Architecture'
+        required: true
+        default: 'arm64'
+        type: choice
+        options:
+          - arm64
+          - arm64;x86_64
+          - x86_64
+
+jobs:
+  build-macos:
+    runs-on: macos-14  # Native Apple Silicon M1 runner on GitHub Actions
+    name: Build macOS (${{ inputs.architecture || 'arm64' }})
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Build Tools
+        run: |
+          brew install ninja cmake
+
+      - name: Configure CMake
+        run: |
+          cmake -B build-macos \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }} \
+            -DCMAKE_OSX_ARCHITECTURES="${{ inputs.architecture || 'arm64' }}" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET="11.0" \
+            -DSJ_ENABLE_AU=ON \
+            -DSJ_BUILD_TESTS=ON
+
+      - name: Build All Targets (VST3, AU, Standalone, Tests)
+        run: |
+          cmake --build build-macos --config ${{ inputs.build_type || 'Release' }} --parallel
+
+      - name: Run Automated Audit Test Suite
+        run: |
+          if [ -f "build-macos/run_audit_tests" ]; then
+            ./build-macos/run_audit_tests
+          fi
+
+      - name: Ad-Hoc Sign Plugin Bundles
+        run: |
+          CONFIG="${{ inputs.build_type || 'Release' }}"
+          BASE="build-macos/SJChannelStrip_artefacts/$CONFIG"
+          if [ -d "$BASE/VST3/SJ Channel Strip.vst3" ]; then
+            codesign --force --deep -s - "$BASE/VST3/SJ Channel Strip.vst3"
+          fi
+          if [ -d "$BASE/AU/SJ Channel Strip.component" ]; then
+            codesign --force --deep -s - "$BASE/AU/SJ Channel Strip.component"
+          fi
+          if [ -d "$BASE/Standalone/SJ Channel Strip.app" ]; then
+            codesign --force --deep -s - "$BASE/Standalone/SJ Channel Strip.app"
+          fi
+
+      - name: Package macOS Artifacts
+        run: |
+          CONFIG="${{ inputs.build_type || 'Release' }}"
+          mkdir -p dist
+          cp install_macos.sh dist/
+          chmod +x dist/install_macos.sh
+          cp -R "build-macos/SJChannelStrip_artefacts/$CONFIG" dist/artifacts
+          cd dist
+          zip -r ../SJChannelStrip_macOS_${{ inputs.architecture || 'arm64' }}.zip .
+
+      - name: Upload macOS Plugin Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SJChannelStrip-macOS-${{ inputs.architecture || 'arm64' }}
+          path: SJChannelStrip_macOS_${{ inputs.architecture || 'arm64' }}.zip
+          retention-days: 14

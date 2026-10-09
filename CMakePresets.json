@@ -1,0 +1,136 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "windows-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "installDir": "${sourceDir}/out/install/${presetName}",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl.exe",
+        "CMAKE_CXX_COMPILER": "cl.exe"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "x64-Debug",
+      "displayName": "x64 Debug",
+      "description": "Visual Studio / Ninja x64 Debug Build",
+      "inherits": "windows-base",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "x64-Release",
+      "displayName": "x64 Release",
+      "description": "Visual Studio / Ninja x64 Release Build",
+      "inherits": "windows-base",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "macos-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "installDir": "${sourceDir}/out/install/${presetName}",
+      "cacheVariables": {
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0",
+        "SJ_ENABLE_AU": "ON"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
+      "name": "macos-arm64-release",
+      "displayName": "macOS Apple Silicon (arm64) Release",
+      "description": "Release build optimized for Apple Silicon (M1/M2/M3/M4)",
+      "inherits": "macos-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_OSX_ARCHITECTURES": "arm64"
+      }
+    },
+    {
+      "name": "macos-universal-release",
+      "displayName": "macOS Universal Binary (arm64 + x86_64) Release",
+      "description": "Universal 2 binary for both Apple Silicon and Intel Macs",
+      "inherits": "macos-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_OSX_ARCHITECTURES": "arm64;x86_64"
+      }
+    },
+    {
+      "name": "macos-x64-release",
+      "displayName": "macOS Intel (x86_64) Release",
+      "description": "Release build for legacy Intel-based Macs",
+      "inherits": "macos-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_OSX_ARCHITECTURES": "x86_64"
+      }
+    },
+    {
+      "name": "macos-arm64-debug",
+      "displayName": "macOS Apple Silicon (arm64) Debug",
+      "description": "Debug build with symbols for Apple Silicon",
+      "inherits": "macos-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_OSX_ARCHITECTURES": "arm64"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "x64-Debug",
+      "displayName": "x64 Debug",
+      "configurePreset": "x64-Debug"
+    },
+    {
+      "name": "x64-Release",
+      "displayName": "x64 Release",
+      "configurePreset": "x64-Release"
+    },
+    {
+      "name": "macos-arm64-release",
+      "displayName": "macOS Apple Silicon (arm64) Release",
+      "configurePreset": "macos-arm64-release"
+    },
+    {
+      "name": "macos-universal-release",
+      "displayName": "macOS Universal Binary Release",
+      "configurePreset": "macos-universal-release"
+    },
+    {
+      "name": "macos-x64-release",
+      "displayName": "macOS Intel (x86_64) Release",
+      "configurePreset": "macos-x64-release"
+    },
+    {
+      "name": "macos-arm64-debug",
+      "displayName": "macOS Apple Silicon (arm64) Debug",
+      "configurePreset": "macos-arm64-debug"
+    }
+  ]
+}
+

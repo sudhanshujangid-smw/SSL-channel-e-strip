@@ -1,0 +1,11 @@
+build/
+build-*/
+.vs/
+.idea/
+.vscode/
+*.obj
+*.pdb
+*.ilk
+*.user
+*.suo
+.DS_Store
